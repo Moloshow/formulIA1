@@ -29,3 +29,6 @@ docs/
 
 # Jupyter Notebooks checkpoints
 .ipynb_checkpoints
+
+datasets/
+runs/
