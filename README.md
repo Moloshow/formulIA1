@@ -39,6 +39,19 @@ cd formulia1
 pip install -r requirements.txt
 ```
 
+## Architecture Philosophy
+
+### 1. Two-Stage Cascade (Detection ➔ Classification)
+Rather than training a single YOLO model to detect 10 different F1 teams simultaneously, FormulIA1 decouples the problem into two models:
+*   **Model A (Segmentation/Detection)**: Trained solely on a single class (`f1_car`). It learns the structural shape of a Formula 1 car and is highly robust to scale, blur, and lighting.
+*   **Model B (Classification)**: A lightweight classifier that analyzes tight crops of the detected cars to identify the specific team (e.g., Ferrari, Mercedes).
+*   **The "Why"**: Scalability and maintainability. When a new F1 season starts with new car liveries, only the lightweight classifier (Model B) needs fine-tuning on a small set of images. You completely avoid the massive cost of re-annotating tens of thousands of complex bounding boxes or polygons for the detection model.
+
+### 2. Auto-Labeling with Foundation Models
+Manual pixel annotation for semantic segmentation is extremely time-consuming. To achieve pixel-perfect tracking and ego-motion masking without manual labor, this pipeline relies on **Data Engineering via Foundation Models**:
+*   **NVIDIA SegFormer** is used zero-shot to extract the drivable surface (the track) mask, allowing optical flow to ignore TV HUDs and grandstands.
+*   **Meta SAM (Segment Anything Model)** is used to automatically upgrade coarse bounding boxes into precise F1 car polygons.
+
 ## Datasets & Data Flow
 
 This project relies on a cascading data engineering pipeline to transform a basic object detection dataset into complex instance segmentation and classification datasets.
