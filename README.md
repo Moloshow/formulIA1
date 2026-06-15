@@ -25,6 +25,7 @@ FormulIA1 is a modular Computer Vision pipeline designed to extract physical tra
 *   **Instance Segmentation Tracking**: Utilizes YOLOv8-seg for pixel-accurate vehicle and track masking, eliminating bounding box jitter.
 *   **Restricted Ego-Motion Stabilization**: Computes robust visual odometry by isolating optical flow calculations exclusively to the semantic road surface.
 *   **Monocular Depth-SLAM**: Integrates Depth Anything V2 for experimental 3D camera space unprojection and rigid-body transformation tracking.
+*   **Smart Re-Identification (ReID)**: Custom anti-occlusion merging logic that validates geographical proximity and team livery to reconnect broken trajectories.
 *   **Cascade Classification Architecture**: Isolates tracking and team identification into a two-stage process for optimized inference.
 *   **Automated Data Engineering**: Includes utilities integrating SegFormer and Segment Anything Model (SAM) for automated road and vehicle dataset labeling.
 
@@ -177,6 +178,6 @@ Transparency on technical debt and current system boundaries:
 
 - [x] **Phase 1: Stable Segmentation Tracking**: Mask-centroid tracking and restricted ego-motion to eliminate bounding-box jitter.
 - [ ] **Phase 2: Dataset & Labeling Refinement**: Expand the dataset to include multiple F1 seasons (to resolve temporal bias) and manually label complex track surfaces (kerbs/run-offs) to fix zero-shot segmentation artifacts.
-- [ ] **Phase 3: Edge-Case Tracking Logic**: Implement robust fallback mechanisms for tracking occlusions, handle fast whip-pan optical flow failures, and refine mask-merging artifacts to improve overall tracker stability.
+- [x] **Phase 3: Edge-Case Tracking Logic**: Implemented Smart ReID fallback mechanisms for tracking occlusions. Still need to handle fast whip-pan optical flow failures and refine mask-merging artifacts to improve overall tracker stability.
 - [ ] **Phase 4: Radar Mini-Map**: Projection of $(cx, cy)$ pixel coordinates onto a 2D satellite orthophoto using multi-point homography registration.
 - [ ] **Phase 5: Telemetry Sync**: Integration with the `FastF1` API via Optical Character Recognition (OCR) syncing to overlay real-time throttle/brake telemetry on the tracked vehicles.
