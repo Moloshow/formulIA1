@@ -21,6 +21,7 @@ FormulIA1 is a modular Computer Vision pipeline designed to extract physical tra
 
 ## Key Features
 
+*   **Broadcast-Style HUD**: Replaces standard bounding boxes with sleek, dynamic telemetry-style overlays showing team names and tracker IDs.
 *   **Instance Segmentation Tracking**: Utilizes YOLOv8-seg for pixel-accurate vehicle and track masking, eliminating bounding box jitter.
 *   **Restricted Ego-Motion Stabilization**: Computes robust visual odometry by isolating optical flow calculations exclusively to the semantic road surface.
 *   **Monocular Depth-SLAM**: Integrates Depth Anything V2 for experimental 3D camera space unprojection and rigid-body transformation tracking.
@@ -100,6 +101,11 @@ python run_pipeline.py --source videos/sample_f1.mp4 --depth-slam
 **Debug mode (visualize semantic road mask and freeze edge tracking):**
 ```bash
 python run_pipeline.py --source videos/sample_f1.mp4 --show-mask --freeze-edges
+```
+
+**Use classic YOLO bounding boxes instead of the broadcast-style HUD:**
+```bash
+python run_pipeline.py --source videos/sample_f1.mp4 --classic-bbox
 ```
 
 ### Data Engineering

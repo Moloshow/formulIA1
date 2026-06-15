@@ -58,6 +58,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--depth-slam", action="store_true", help="Enable 3D SLAM via Depth Anything V2")
     parser.add_argument("--show-mask", action="store_true", help="Display the semantic road mask overlay")
     parser.add_argument("--freeze-edges", action="store_true", help="Freeze tracking near frame edges")
+    parser.add_argument("--classic-bbox", action="store_true", help="Draw classic YOLO bounding boxes instead of modern F1 HUD")
     return parser.parse_args()
 
 
@@ -380,9 +381,38 @@ class F1Pipeline:
             else:
                 color = TRACK_COLORS[track_id % len(TRACK_COLORS)]
 
-            cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(annotated_frame, team_name, (x1, max(0, y1 - 10)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+            if self.args.classic_bbox:
+                cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(annotated_frame, f"{team_name} #{track_id}", (x1, max(0, y1 - 10)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+            else:
+                # --- Broadcast-Style Modern HUD ---
+                # TODO(Phase 3): Implement T-Cam color detection (Yellow vs Black) to identify 
+                # the specific driver (e.g., Hamilton vs Russell) and store persistently.
+                hud_text = f"{team_name.upper()} | ID:{track_id}"
+                
+                (text_w, text_h), _ = cv2.getTextSize(hud_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                hud_w = text_w + 20
+                hud_h = 28
+                
+                hud_x = x1
+                hud_y = max(0, y1 - hud_h - 10)
+                
+                # Check boundaries to avoid drawing outside the frame
+                if hud_x + hud_w <= self.width and hud_y >= 0:
+                    sub_img = annotated_frame[hud_y:hud_y+hud_h, hud_x:hud_x+hud_w]
+                    black_rect = np.zeros_like(sub_img)
+                    
+                    # Semi-transparent dark background
+                    res = cv2.addWeighted(sub_img, 0.3, black_rect, 0.7, 0)
+                    annotated_frame[hud_y:hud_y+hud_h, hud_x:hud_x+hud_w] = res
+                    
+                    # Thick colored accent line on the left edge
+                    cv2.rectangle(annotated_frame, (hud_x, hud_y), (hud_x + 4, hud_y + hud_h), color, -1)
+                    
+                    # Crisp white text
+                    cv2.putText(annotated_frame, hud_text, (hud_x + 10, hud_y + 19),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
             
             self.track_colors_dict[track_id] = color
 
