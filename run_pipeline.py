@@ -376,6 +376,33 @@ class F1Pipeline:
                     crop = annotated_frame[y1:y2, x1:x2]
                     cls_results = self.model_cls(crop, verbose=False)
                     team_name = cls_results[0].names[cls_results[0].probs.top1]
+                    
+                    # --- SMART RE-IDENTIFICATION (ReID) MERGE ---
+                    # If a car disappears behind a wall (loses its ID) and reappears with a new ID,
+                    # we check if the new car has the same team livery and is geographically close 
+                    # to where a car of the same team was recently lost.
+                    cx_new, cy_new = (x1 + x2) / 2.0, (y1 + y2) / 2.0
+                    for old_id, pts in list(self.track_history.items()):
+                        if old_id not in track_ids and len(pts) > 0 and self.track_classes.get(old_id) == team_name:
+                            last_pt = pts[-1]
+                            if self.args.depth_slam:
+                                pts_2d, _ = cv2.projectPoints(
+                                    np.array([last_pt], dtype=np.float32), np.zeros((3, 1)), np.zeros((3, 1)),
+                                    self.k_matrix, self.dist_coeffs
+                                )
+                                lx, ly = pts_2d[0][0][0], pts_2d[0][0][1]
+                            else:
+                                lx, ly = last_pt[0], last_pt[1]
+                                
+                            dist = np.hypot(lx - cx_new, ly - cy_new)
+                            if dist < 300:  # Max 300 pixels jump allowed for occlusion
+                                logger.info("Smart ReID: Merged new ID %d with lost ID %d (%s)", track_id, old_id, team_name)
+                                self.track_history[track_id] = list(self.track_history[old_id])
+                                del self.track_history[old_id]
+                                if old_id in self.track_classes:
+                                    del self.track_classes[old_id]
+                                break
+                                
                     self.track_classes[track_id] = team_name
                 color = TEAM_COLORS.get(team_name, (0, 255, 255))
             else:
